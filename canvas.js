@@ -17,9 +17,17 @@
 			this.images[key] = new Image();
 			this.images[key].onload = function(){
 				this.imagesLoaded ++;
-			}
+			}.bind(this);
 			this.images[key].src = "./img/" + src;
 		};
+
+		this.dots = [
+			new Dot("blue", {x: 0, y: 0}),
+			new Dot("red", {x: 125, y: 0}),
+			new Dot("green", {x: 250, y: 0}),
+			new Dot("black", {x: 375, y: 0}),
+			new Dot("black", {x: 500, y: 0})
+		]
 
 		/*
          * Update function which runs to update positions and check for winning
@@ -33,19 +41,30 @@
 		 */
 		this.draw = function(){
 			if(this.imagesLoaded < Object.keys(this.images).length) return;
-			ctx.drawImage(this.images.background, 0, 0);
+			ctx.drawImage(this.images.background, 0, 100);
+			this.dots.forEach(function(dot){
+				ctx.drawImage(this.images[dot.color], dot.pos.x, dot.pos.y);
+			}.bind(this));
 		}
 
 	};
 
+	var Dot = function(color, start){
+		this.color = color;
+		this.start = start;
+		this.pos = {x: start.x, y: start.y};
+	}
+
 	exports.IAGame = IAGame;
 })(window);
 
+var iagame; // debugging
+
 window.onload = function(){
 	var canvas = document.getElementById("app");
-	canvas.style.width = "800px";
-	canvas.style.height = "600px";
-	var iagame = new IAGame(canvas);
+	canvas.width = "600";
+	canvas.height = "700";
+	iagame = new IAGame(canvas);
 
 	var updateGame = function(){
 		window.requestAnimationFrame(updateGame);
