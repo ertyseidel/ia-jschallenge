@@ -41,10 +41,13 @@
 		this.currentDot = null;
 		this.currentMousePos = {x: 0, y: 0};
 
+		this.won = false;
+
 		/*
          * Update function which runs to update positions and check for winning
 		 */
 		this.update = function(){
+			var dotsCorrect = 0;
 			if(this.imagesLoaded < Object.keys(this.images).length) return;
 			if(this.currentDot){
 				this.currentDot.pos.x = this.currentMousePos.x - this.currentDot.mousePos.x;
@@ -54,8 +57,22 @@
 					if(drop.contains(this.currentDot.getCenter()) && drop.color == this.currentDot.color){
 						this.currentDot.pos.x = drop.pos.x;
 						this.currentDot.pos.y = drop.pos.y;
+						this.currentDot.correctlyDropped = true;
 					}
 				}.bind(this));
+			}
+
+			this.dots.forEach(function(dot){
+				if(!dot.correctlyDropped){
+					if(dot.pos.x != dot.start.x) dot.pos.x -= (dot.pos.x - dot.start.x) / 10;
+					if(dot.pos.y != dot.start.y) dot.pos.y -= (dot.pos.y - dot.start.y) / 10;
+				} else{
+					dotsCorrect ++;
+				}
+			});
+
+			if(dotsCorrect == Object.keys(this.images).length){
+				this.won = true;
 			}
 		};
 
@@ -112,6 +129,7 @@
 		this.size = {x: 100, y: 100},
 		this.pos = {x: start.x, y: start.y},
 		this.mousePos = {x: 0, y: 0}
+		this.correctlyDropped = false;
 	}
 
 	Dot.prototype.contains = contains;
