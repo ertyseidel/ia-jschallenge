@@ -53,13 +53,16 @@
 				this.currentDot.pos.x = this.currentMousePos.x - this.currentDot.mousePos.x;
 				this.currentDot.pos.y = this.currentMousePos.y - this.currentDot.mousePos.y;
 
+				var correctDrop = false;
 				this.drops.forEach(function(drop){
 					if(drop.contains(this.currentDot.getCenter()) && drop.color == this.currentDot.color){
 						this.currentDot.pos.x = drop.pos.x;
 						this.currentDot.pos.y = drop.pos.y;
-						this.currentDot.correctlyDropped = true;
+						correctDrop = true;
 					}
 				}.bind(this));
+
+				this.currentDot.correctlyDropped = correctDrop;
 			}
 
 			this.dots.forEach(function(dot){
@@ -71,9 +74,7 @@
 				}
 			});
 
-			if(dotsCorrect == Object.keys(this.images).length){
-				this.won = true;
-			}
+			this.won = dotsCorrect == Object.keys(this.images).length;
 		};
 
 		/*
@@ -86,6 +87,12 @@
 			this.dots.forEach(function(dot){
 				ctx.drawImage(this.images[dot.color], dot.pos.x, dot.pos.y);
 			}.bind(this));
+
+			if(this.won){
+				ctx.fillStyle = "#000000";
+				ctx.font="30px sans-serif";
+				ctx.fillText("You Win!", 100, 50);
+			}
 		};
 
 		this.mousemove = function(evt){
