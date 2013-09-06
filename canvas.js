@@ -68,7 +68,7 @@
 			}
 
 			this.dots.forEach(function(dot){
-				if(!dot.correctlyDropped){
+				if(!dot.correctlyDropped && dot !== this.currentDot){
 					if(dot.pos.x != dot.start.x){
 						dot.pos.x -= (dot.pos.x - dot.start.x) / 10;
 						if(Math.abs(dot.pos.x - dot.start.x) < .1) dot.pos.x = dot.start.x;
@@ -79,7 +79,7 @@
 						if(Math.abs(dot.pos.y - dot.start.y) < .1) dot.pos.y = dot.start.y;
 						this.dirty = true;	
 					} 
-				} else{
+				} else if(dot !== this.currentDot){
 					dotsCorrect ++;
 				}
 			}.bind(this));
@@ -115,10 +115,6 @@
 				ctx.font="30px sans-serif";
 				ctx.fillText("You Win!", 100, 50);
 			}
-
-			//debug
-			ctx.fillStyle = "#ff6600";
-			ctx.fillRect(this.currentMousePos.x, this.currentMousePos.y, 10, 10);
 			
 			this.dirty = false;
 		};
@@ -192,8 +188,6 @@
 
 	exports.IAGame = IAGame;
 })(window);
-
-var iagame; // debugging
 
 window.onload = function(){
 	var canvas = document.getElementById("app");
