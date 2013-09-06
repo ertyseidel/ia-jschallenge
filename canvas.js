@@ -1,9 +1,10 @@
 ;(function(exports){
 	var IAGame = function (canvasElement, images){
-		if(!canvasElement.getContext) throw "canvasElement could not get context";
-		var ctx = canvasElement.getContext("2d"); //get canvas context element
-
 		this.imagesLoaded = 0; //number of images which have finished loading
+
+		this.backgroundCache = null;
+
+		this.dirty = true;
 
 		this.images = {
 			background: "ia-logo-back.png",
@@ -44,12 +45,13 @@
 		this.won = false;
 
 		/*
-         * Update function which runs to update positions and check for winning
+		 * Update function which runs to update positions and check for winning
 		 */
 		this.update = function(){
 			var dotsCorrect = 0;
 			if(this.imagesLoaded < Object.keys(this.images).length) return;
 			if(this.currentDot){
+				this.dirty = true;
 				this.currentDot.pos.x = this.currentMousePos.x - this.currentDot.mousePos.x;
 				this.currentDot.pos.y = this.currentMousePos.y - this.currentDot.mousePos.y;
 
@@ -67,23 +69,43 @@
 
 			this.dots.forEach(function(dot){
 				if(!dot.correctlyDropped){
-					if(dot.pos.x != dot.start.x) dot.pos.x -= (dot.pos.x - dot.start.x) / 10;
-					if(dot.pos.y != dot.start.y) dot.pos.y -= (dot.pos.y - dot.start.y) / 10;
+					if(dot.pos.x != dot.start.x){
+						dot.pos.x -= (dot.pos.x - dot.start.x) / 10;
+						if(Math.abs(dot.pos.x - dot.start.x) < .1) dot.pos.x = dot.start.x;
+						this.dirty = true;	
+					}
+					if(dot.pos.y != dot.start.y){
+						dot.pos.y -= (dot.pos.y - dot.start.y) / 10;
+						if(Math.abs(dot.pos.y - dot.start.y) < .1) dot.pos.y = dot.start.y;
+						this.dirty = true;	
+					} 
 				} else{
 					dotsCorrect ++;
 				}
-			});
+			}.bind(this));
 
+			var tempWon = this.won;
 			this.won = dotsCorrect == Object.keys(this.images).length;
+			if(this.won != tempWon) this.dirty = true;
 		};
 
 		/*
 		 * Draw function which repaints canvas at (hopefully) 60 frames per second
 		 */
-		this.draw = function(){
+		this.draw = function(ctx){
+			if(!this.dirty) return;
 			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-			if(this.imagesLoaded < Object.keys(this.images).length) return;
-			ctx.drawImage(this.images.background, 0, 100);
+
+			if(this.backgroundCache == null){
+				var that = this;
+				this.backgroundCache = renderToCanvas(ctx.canvas.width, ctx.canvas.height, function(ctx){
+					if(that.imagesLoaded < Object.keys(that.images).length) return;
+					ctx.drawImage(that.images.background, 0, 100);
+				});
+			}
+
+			ctx.drawImage(this.backgroundCache, 0, 0);
+
 			this.dots.forEach(function(dot){
 				ctx.drawImage(this.images[dot.color], dot.pos.x, dot.pos.y);
 			}.bind(this));
@@ -93,6 +115,12 @@
 				ctx.font="30px sans-serif";
 				ctx.fillText("You Win!", 100, 50);
 			}
+
+			//debug
+			ctx.fillStyle = "#ff6600";
+			ctx.fillRect(this.currentMousePos.x, this.currentMousePos.y, 10, 10);
+			
+			this.dirty = false;
 		};
 
 		this.mousemove = function(evt){
@@ -153,7 +181,14 @@
 
 	Drop.prototype.getCenter = getCenter;
 
-	
+	//from http://kaioa.com/node/103
+	var renderToCanvas = function (width, height, renderFunction) {
+		var buffer = document.createElement('canvas');
+		buffer.width = width;
+		buffer.height = height;
+		renderFunction(buffer.getContext('2d'));
+		return buffer;
+	};
 
 	exports.IAGame = IAGame;
 })(window);
@@ -166,6 +201,8 @@ window.onload = function(){
 	canvas.height = "700";
 	canvas.style.position = "relative";
 	iagame = new IAGame(canvas);
+	if(!canvas.getContext) throw "canvas could not get context";
+	var ctx = canvas.getContext("2d"); //get canvas context element
 
 	canvas.addEventListener("mousedown", function(evt){iagame.mousedown(evt)});
 	canvas.addEventListener("mouseup", function(evt){iagame.mouseup(evt)});
@@ -174,7 +211,7 @@ window.onload = function(){
 	var updateGame = function(){
 		window.requestAnimationFrame(updateGame);
 		iagame.update();
-		iagame.draw();
+		iagame.draw(ctx);
 	}
 
 	window.requestAnimationFrame(updateGame); //gogogo
