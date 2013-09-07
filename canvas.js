@@ -1,6 +1,8 @@
 ;(function(exports){
 	var IAGame = function (canvasElement, images){
 		this.imagesLoaded = 0; //number of images which have finished loading
+		this.width = canvasElement.width;
+		this.height = canvasElement.height;
 
 		this.backgroundCache = null;
 
@@ -13,15 +15,6 @@
 			green: "ia-logo-dot-green.png",
 			red: "ia-logo-dot-red.png"
 		}
-
-		for (var key in this.images){
-			var src = this.images[key];
-			this.images[key] = new Image();
-			this.images[key].onload = function(){
-				this.imagesLoaded ++;
-			}.bind(this);
-			this.images[key].src = "./img/" + src;
-		};
 
 		this.dots = [
 			new Dot("blue", {x: 0, y: 0}),
@@ -43,6 +36,15 @@
 		this.currentMousePos = {x: 0, y: 0};
 
 		this.won = false;
+
+		for (var key in this.images){
+			var src = this.images[key];
+			this.images[key] = new Image();
+			this.images[key].onload = function(){
+				this.imagesLoaded ++;
+			}.bind(this);
+			this.images[key].src = "./img/" + src;
+		};
 
 		/*
 		 * Update function which runs to update positions and check for winning
@@ -100,13 +102,19 @@
 		 */
 		this.draw = function(ctx){
 			if(!this.dirty) return;
-			ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+			console.log(this.won);
+			ctx.clearRect(0, 0, this.width, this.height);
 
 			if(this.backgroundCache == null){
 				var that = this;
 				this.backgroundCache = renderToCanvas(ctx.canvas.width, ctx.canvas.height - 100, function(ctx){
 					if(that.imagesLoaded < Object.keys(that.images).length) return;
 					ctx.drawImage(that.images.background, 0, 0);
+					ctx.fillStyle = "#c52d47";
+					ctx.fillRect(ctx.canvas.width - 100, ctx.canvas.height - 20, 100, 20);
+					ctx.fillStyle = "#000000";
+					ctx.font="20px sans-serif";
+					ctx.fillText("RESET", ctx.canvas.width - 83,  ctx.canvas.height- 3);
 				});
 			}
 
@@ -125,6 +133,21 @@
 			this.dirty = false;
 		};
 
+		this.reset = function(){
+			this.dots.forEach(function(dot){
+				dot.pos.x = dot.start.x;
+				dot.pos.y = dot.start.y;
+				dot.correctlyDropped = false;
+			});
+
+			this.drops.forEach(function(drop){
+				drop.occupied = null;
+			});
+
+			this.won = false;
+			this.dirty = true;
+		}
+
 		this.mousemove = function(evt){
 			if(this.currentDot){
 				this.currentMousePos.x = evt.offsetX;
@@ -142,6 +165,10 @@
 					this.currentDot = dot;
 				}
 			}.bind(this));
+
+			if(evt.offsetX > this.width - 100 && evt.offsetY > this.height - 20){
+				this.reset();
+			}
 		};
 
 		this.mouseup = function(evt){
@@ -196,14 +223,12 @@
 	exports.IAGame = IAGame;
 })(window);
 
-var iagaone;
-
 window.onload = function(){
 	var canvas = document.getElementById("app");
 	canvas.width = "600";
 	canvas.height = "700";
 	canvas.style.position = "relative";
-	iagame = new IAGame(canvas);
+	var iagame = new IAGame(canvas);
 	if(!canvas.getContext) throw "canvas could not get context";
 	var ctx = canvas.getContext("2d"); //get canvas context element
 
