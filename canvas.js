@@ -34,7 +34,7 @@
 		this.drops = [
 			new Drop("blue", {x: 275, y: 148}),
 			new Drop("red", {x: 455, y: 172}),
-			new Drop("green", {x: 145, y: 435}),
+			new Drop("green", {x: 143, y: 434}),
 			new Drop("black", {x: 47, y: 291}),
 			new Drop("black", {x: 419, y: 388})
 		];
@@ -57,10 +57,16 @@
 
 				var correctDrop = false;
 				this.drops.forEach(function(drop){
-					if(drop.contains(this.currentDot.getCenter()) && drop.color == this.currentDot.color){
-						this.currentDot.pos.x = drop.pos.x;
-						this.currentDot.pos.y = drop.pos.y;
-						correctDrop = true;
+					if(drop.contains(this.currentDot.getCenter())){
+						if(drop.color == this.currentDot.color &&
+						drop.occupied == null || drop.occupied == this.currentDot){
+							this.currentDot.pos.x = drop.pos.x;
+							this.currentDot.pos.y = drop.pos.y;
+							drop.occupied = this.currentDot;
+							correctDrop = true;
+						}
+					} else if(drop.occupied == this.currentDot){
+						drop.occupied = null;
 					}
 				}.bind(this));
 
@@ -98,13 +104,13 @@
 
 			if(this.backgroundCache == null){
 				var that = this;
-				this.backgroundCache = renderToCanvas(ctx.canvas.width, ctx.canvas.height, function(ctx){
+				this.backgroundCache = renderToCanvas(ctx.canvas.width, ctx.canvas.height - 100, function(ctx){
 					if(that.imagesLoaded < Object.keys(that.images).length) return;
-					ctx.drawImage(that.images.background, 0, 100);
+					ctx.drawImage(that.images.background, 0, 0);
 				});
 			}
 
-			ctx.drawImage(this.backgroundCache, 0, 0);
+			ctx.drawImage(this.backgroundCache, 0, 100);
 
 			this.dots.forEach(function(dot){
 				ctx.drawImage(this.images[dot.color], dot.pos.x, dot.pos.y);
@@ -171,6 +177,7 @@
 		this.color = color;
 		this.pos = pos;
 		this.size = {x: 100, y: 100};
+		this.occupied = null;
 	};
 
 	Drop.prototype.contains = contains;
@@ -188,6 +195,8 @@
 
 	exports.IAGame = IAGame;
 })(window);
+
+var iagaone;
 
 window.onload = function(){
 	var canvas = document.getElementById("app");
